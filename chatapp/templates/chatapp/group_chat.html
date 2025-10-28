@@ -1,0 +1,188 @@
+{% extends "chatapp/base.html" %}
+
+{% block title %} 
+    Group Chat - {{ group.name }}
+{% endblock title %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <div class="d-flex justify-content-between">
+                            <a href="/group/{{ group.id }}/about/" class="btn btn-link">About Group</a>
+                            {% if is_admin %}
+                                <a href="/group/{{ group.id }}/admin/" class="btn btn-link">Admin Access</a>
+                            {% endif %}
+                        </div>
+                        <h2>{{ group.name }}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="chat-log" class="border p-3 mb-3" style="height: 400px; overflow-y: scroll; background-color: #f0f8ff;"></div>
+                        <textarea id="chat-message-input" class="form-control mb-3" placeholder="Type your message..." autocomplete="off" rows="3"></textarea>
+                        <button id="send-button" class="btn btn-primary w-100">Send</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h3>Online Members</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="online-users" class="border p-3" style="height: 400px; overflow-y: scroll; background-color: #f0f8ff;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const group_no = "{{ group.id }}";
+            const isAdmin = "{{ is_admin }}"; 
+            const chatSocket = new WebSocket(
+                'ws://' + 
+                window.location.host + 
+                '/ws/group/' + 
+                group_no + 
+                '/chat/'
+            );
+            const onlineUsersSocket = new WebSocket(
+                'ws://' + 
+                window.location.host + 
+                '/ws/group/' + 
+                group_no + 
+                '/online_members/'
+            );
+
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log("received data: ", data);
+                if (data.type === "previous_messages") {
+                    data.messages.forEach(message => {
+                        console.log("received previous_messages: ");
+                        displayMessage(message);
+                        sendSeenConfirmation(message.id);
+                    });
+                } else if (data.type === 'chat_message') {
+                    displayMessage(data.message);
+                    sendSeenConfirmation(data.message.id);
+                } else if (data.type === 'seen_count_update') {
+                    updateSeenStatus(data.message_id, data.seen_count);
+                }
+            };
+
+            onlineUsersSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log("Got online users, users: ", data)
+                if (data.type === 'online_members') {
+                    displayOnlineUsers(data.members);
+                }
+            };
+
+            chatSocket.onclose = function(e) {
+                console.error('Chat socket closed unexpectedly');
+            };
+
+            onlineUsersSocket.onclose = function(e) {
+                console.error('Online users socket closed unexpectedly');
+            };
+
+            document.querySelector('#send-button').onclick = function() {
+                const messageInputDOM = document.querySelector('#chat-message-input');
+                const message = messageInputDOM.value;
+                chatSocket.send(JSON.stringify({
+                    'type' : 'incoming_message',
+                    'message': message
+                }));
+                messageInputDOM.value = '';
+            };
+
+            function displayMessage(message) {
+                const chatLog = document.querySelector('#chat-log');
+                const messageElement = document.createElement('div');
+                const messageType = message.sender === "{{ user.username }}" ? 'sent' : 'received';
+                const seenCountShow = `<small><a href="/message/${message.id}/">${message.seen_count} seen</a></small>`;
+                messageElement.className = `message ${messageType} p-2 mb-2 rounded`;
+                messageElement.id = 'message-' + message.id;
+                messageElement.innerHTML = 
+                    `<div class="fw-bold sender" id="message-${message.id}_sender">${message.sender}</div>` +
+                    `<div class="content" id="message-${message.id}_content">${message.content}</div>` +
+                    `<div class="timestamp text-muted small" id="message-${message.id}_timestamp">${new Date(message.timestamp).toLocaleString()}</div>` +
+                    `<div class="seen_count text-muted small" id="message-${message.id}_seen_count">${seenCountShow}</div>`;
+                chatLog.appendChild(messageElement);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+
+            function updateSeenStatus(messageId, seen_count) {
+                const readStatusElement = document.querySelector('#message-' + messageId + '_seen_count');
+                if (readStatusElement) {
+                    readStatusElement.innerHTML = `<small><a href="/message/${messageId}/">${seen_count} seen</a></small>`;
+                }
+            }
+
+            function sendSeenConfirmation(messageId) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'seen_confirmation',
+                    'seen_message_id': messageId
+                }));
+            }
+
+            function displayOnlineUsers(users) {
+                const onlineUsersContainer = document.querySelector('#online-users');
+                onlineUsersContainer.innerHTML = '';
+                users.forEach(user => {
+                    const userElement = document.createElement('div');
+                    userElement.className = 'user p-2 mb-2 bg-light rounded';
+                    userElement.innerText = user.username;
+                    userElement.onclick = function() {
+                        window.location.href = '/profile/' + user.id + '/';
+                    };
+                    onlineUsersContainer.appendChild(userElement);
+                });
+            }
+        });
+    </script>
+{% endblock script %}
+
+{% block style %}
+    <style>
+        #chat-log {
+            height: 400px;
+            overflow-y: scroll;
+            background-color: #f0f8ff;
+        }
+        .message.sent {
+            background-color: #dcf8c6;
+            text-align: right;
+            border-radius: 15px 15px 0 15px;
+            color: black;
+        }
+        .message.received {
+            background-color: #ffffff;
+            border-radius: 15px 15px 15px 0;
+            color: black;
+        }
+        .message .sender {
+            font-weight: bold;
+        }
+        .message .content {
+            margin: 5px 0;
+            white-space: pre-wrap; /* Preserve newlines and spaces */
+        }
+        .message .timestamp, .message .seen_count {
+            font-size: 0.8em;
+            color: #888;
+        }
+        .user {
+            cursor: pointer;
+        }
+        .user:hover {
+            background-color: #d1e7ff;
+        }
+    </style>
+{% endblock style %}

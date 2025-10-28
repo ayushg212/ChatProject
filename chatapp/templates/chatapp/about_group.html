@@ -1,0 +1,126 @@
+{% extends "chatapp\\base.html" %}
+
+{% block title %}
+    About Group - {{ group.name }}
+{% endblock title %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-primary text-center">About Group: {{ group.name }}</h1>
+        {% if group.description %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">Group Description</h2>
+                    <p class="card-text">{{ group.description }}</p>
+                </div>
+            </div>
+        {% endif %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Group Creator</h2>
+                <p>
+                    <a href="/profile/{{ creator.id }}/" id="creator-{{ creator.id }}" class="link text-decoration-none">
+                        {{ creator.username }}
+                    </a>
+                </p>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Group Creation Time</h2>
+                <p>{{ group.created_at|date:"F j, Y, g:i a" }}</p>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Admins</h2>
+                <div id="admins" class="list-group">
+                    {% for admin in admins %}
+                        <a href="/profile/{{ admin.id }}/" class="list-group-item list-group-item-action" id="admin-{{ admin.id }}">
+                            {{ admin.username }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Members</h2>
+                <div id="members" class="list-group">
+                    {% for member in members %}
+                        <a href="/profile/{{ member.id }}/" class="list-group-item list-group-item-action" id="member-{{ member.id }}">
+                            {{ member.username }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const groupNo = "{{ group.id }}";
+            const groupSocket = new WebSocket(
+                'ws://' + window.location.host + '/ws/group/' + groupNo + '/about/'
+            );
+
+            groupSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+
+                if (data.type === 'member_added') {
+                    addMember(data.member);
+                } else if (data.type === 'member_removed') {
+                    removeMember(data.member_id);
+                } else if (data.type === 'admin_added') {
+                    addAdmin(data.admin);
+                } else if (data.type === 'admin_removed') {
+                    removeAdmin(data.admin_id);
+                }
+            };
+
+            function addMember(member) {
+                let checkmemberDiv = document.getElementById('member-' + member.id);
+                if (checkmemberDiv) {
+                    return;
+                }
+                const membersDiv = document.getElementById('members');
+                const memberDiv = document.createElement('a');
+                memberDiv.className = 'list-group-item list-group-item-action';
+                memberDiv.id = 'member-' + member.id;
+                memberDiv.href = '/profile/' + member.id + '/';
+                memberDiv.textContent = member.username;
+                membersDiv.appendChild(memberDiv);
+            }
+
+            function removeMember(memberId) {
+                const memberDiv = document.getElementById('member-' + memberId);
+                if (memberDiv) {
+                    memberDiv.remove();
+                }
+            }
+
+            function addAdmin(admin) {
+                const checkAdminDiv = document.getElementById('admin-' + admin.id);
+                if (checkAdminDiv) {
+                    return;
+                }
+                const adminsDiv = document.getElementById('admins');
+                const adminDiv = document.createElement('a');
+                adminDiv.className = 'list-group-item list-group-item-action';
+                adminDiv.id = 'admin-' + admin.id;
+                adminDiv.href = '/profile/' + admin.id + '/';
+                adminDiv.textContent = admin.username;
+                adminsDiv.appendChild(adminDiv);
+            }
+
+            function removeAdmin(adminId) {
+                const adminDiv = document.getElementById('admin-' + adminId);
+                if (adminDiv) {
+                    adminDiv.remove();
+                }
+            }
+        });
+    </script>
+{% endblock script %}

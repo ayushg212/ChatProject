@@ -1,0 +1,145 @@
+{% extends "chatapp/base.html" %}
+
+{% block title %} 
+    Private Chat with {{ chat_user.username }}
+{% endblock title %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2>Chat with {{ chat_user.username }}</h2>
+            </div>
+            <div class="card-body">
+                <div id="chat-log" class="border p-3 mb-3" style="height: 400px; overflow-y: scroll; background-color: #f0f8ff;"></div>
+                <textarea id="chat-message-input" class="form-control mb-3" placeholder="Type your message..." autocomplete="off" rows="3"></textarea>
+                <button id="send-button" class="btn btn-primary w-100">Send</button>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block script %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatUser = "{{ chat_user.username }}"
+            const chatSocket = new WebSocket(
+                'ws://' + 
+                window.location.host +
+                '/ws/private_chat/' + 
+                chatUser + '/'
+            );
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log("got message: ", e.data)
+                if (data.type === "previous_messages") {
+                    data.messages.forEach(message => {
+                        displayMessage(message);
+                        let isReceiver = (message.sender === chatUser) ? true : false;
+                        if (message.read === false && isReceiver) {
+                            console.log("YEAH", message.sender, message.id);
+                            sendSeenConfirmation(message.id);
+                        }
+                    });
+                }
+
+                if (data.type === 'chat_message') {
+                    displayMessage(data.message);
+                    sendSeenConfirmation(data.message.id);
+                }
+
+                if (data.type === 'seen_confirmation') {
+                    console.log("GOT SEEN CONFIRMATION");
+                    updateSeenStatus(data.message_id, data.read_time);
+                }
+            };
+
+            chatSocket.onclose = function(e) {
+                console.log(e)
+                console.error('Chat socket closed unexpectedly');
+            };
+
+            document.querySelector('#send-button').onclick = function() {
+                const messageInputDOM = document.querySelector('#chat-message-input');
+                const message = messageInputDOM.value;
+                chatSocket.send(JSON.stringify({
+                    'type' : 'incoming_message',
+                    'message': message
+                }));
+                messageInputDOM.value = '';
+            };
+
+            function displayMessage(message) {
+                console.log("Inside displayMessage : sender : ", message.sender, "content : ", message.content);
+                const chatLog = document.querySelector('#chat-log');
+                const messageElement = document.createElement('div');
+                const messageType = message.sender === chatUser ? 'received' : 'sent';
+                const messageRead = message.read ? 'read' : 'unread';
+                const showReadStatus = message.read ? 'Seen at: <small>' + new Date(message.read_time).toLocaleString() + '</small>' : '' ;
+                messageElement.className = `message ${messageType} ${messageRead} p-2 mb-2 rounded`;
+                messageElement.id = 'message-' + message.id;
+                messageElement.innerHTML = 
+                `<div class="sender fw-bold" id="message-${message.id}_sender">${message.sender}</div>` +
+                `<div class="content" id="message-${message.id}_content">${message.content}</div>` +
+                `<div class="timestamp text-muted small" id="message-${message.id}_timestamp">${new Date(message.timestamp).toLocaleString()}</div>` +
+                `<div class="read-status text-muted small" id="message-${message.id}_read">${showReadStatus}</div>`;
+                
+                chatLog.appendChild(messageElement);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+
+            function updateSeenStatus(messageId, read_time) {
+                console.log("Inside updateSeenStatus : messageId : ", messageId);
+                const messageElement = document.getElementById('message-' + messageId);
+                if (messageElement) {
+                    messageElement.classList.remove('unread');
+                    messageElement.classList.add('read');
+                }
+                const readStatusElement = document.getElementById('message-' + messageId + '_read');
+                if (readStatusElement) {
+                    readStatusElement.innerHTML = 'Seen at: <small>' + new Date(read_time).toLocaleString() + '</small>';
+                }
+            }
+
+            function sendSeenConfirmation(messageId) {
+                console.log("Inside sendSeenConfirmation : ", messageId);
+                chatSocket.send(JSON.stringify({
+                    'type' : 'seen_confirmation',
+                    'seen_message_id': messageId
+                }));
+            }
+        });
+    </script>
+{% endblock script %}
+
+{% block style %}
+    <style>
+        #chat-log {
+            height: 400px;
+            overflow-y: scroll;
+            background-color: #f0f8ff;
+        }
+        .message.sent {
+            background-color: #dcf8c6;
+            text-align: right;
+            border-radius: 15px 15px 0 15px;
+            color: black;
+        }
+        .message.received {
+            background-color: #ffffff;
+            border-radius: 15px 15px 15px 0;
+            color: black;
+        }
+        .message .sender {
+            font-weight: bold;
+        }
+        .message .content {
+            margin: 5px 0;
+            white-space: pre-wrap; /* Preserve newlines and spaces */
+        }
+        .message .timestamp, .message .read-status {
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+{% endblock style %}
