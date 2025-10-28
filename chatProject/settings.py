@@ -26,9 +26,13 @@ SECRET_KEY = 'django-insecure-ksy!t&1^)rfe)1tto&-!&te-rsurc2xs=7#bcmeac8wwbo3jo^
 ONLINE_USERS_TIME_DELTA = 5
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://34.14.177.225",
+]
 
 # docker command : docker run --rm -p 6379:6379 redis:7
 

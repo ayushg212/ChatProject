@@ -11,7 +11,7 @@ from .forms import ChatGroupForm
 # Create your views here.
 @login_required
 def home_view(request):
-    return render(request, 'chatapp\\home.html')
+    return render(request, 'chatapp/home.html')
 
 
 @login_required
@@ -23,7 +23,7 @@ def private_chat_view(request, chat_username):
     context = {
          'chat_user' : chat_user,
     }
-    return render(request, 'chatapp\\private_chat.html', context)
+    return render(request, 'chatapp/private_chat.html', context)
 
 
 @login_required
@@ -35,7 +35,7 @@ def group_chat_view(request, group_id):
         'group' : grp_obj,
         'is_admin' : grp_member_obj.is_admin
     }
-    return render(request, 'chatapp\\group_chat.html', context )
+    return render(request, 'chatapp/group_chat.html', context )
 
 
 @login_required
@@ -50,7 +50,7 @@ def about_group_view(request, group_id):
         'admins' : [admin.member for admin in admins],
         'members' : [member.member for member in members]
     }
-    return render(request, 'chatapp\\about_group.html' , context)
+    return render(request, 'chatapp/about_group.html' , context)
 
 @login_required
 def admin_access_view(request, group_id):
@@ -66,7 +66,7 @@ def admin_access_view(request, group_id):
         'join_requests': join_requests,
 
     }
-    return render(request, 'chatapp\\admin_access.html', context)
+    return render(request, 'chatapp/admin_access.html', context)
 
 @login_required
 def private_chats_list_view(request):
@@ -87,7 +87,7 @@ def private_chats_list_view(request):
     context = {
         'chat_rooms' : chat_data
     }
-    return render(request, 'chatapp\\private_chats_list.html',context)
+    return render(request, 'chatapp/private_chats_list.html',context)
 
 def time_ago(time):
     now = timezone.now()
@@ -119,7 +119,7 @@ def create_group_view(request):
             return redirect('group_chat', group_id=group.id)
     else:
         form = ChatGroupForm()
-    return render(request, 'chatapp\\create_group.html', {'form': form})
+    return render(request, 'chatapp/create_group.html', {'form': form})
 
 
 @login_required
@@ -139,13 +139,13 @@ def group_chats_list_view(request):
                 'unread_count' : count
             }
         )
-    return render(request, 'chatapp\\group_chats_list.html', {'groups': context})
+    return render(request, 'chatapp/group_chats_list.html', {'groups': context})
 
 
 @login_required
 def pending_requests_view(request):
     pending_requests = GroupJoinRequest.objects.filter(user=request.user)
-    return render(request, 'chatapp\\pending_requests.html', {'pending_requests': pending_requests})
+    return render(request, 'chatapp/pending_requests.html', {'pending_requests': pending_requests})
 
 @login_required
 def messaage_seen_detail_view(request, message_id):
@@ -156,7 +156,7 @@ def messaage_seen_detail_view(request, message_id):
         raise Http404("You are not a member of this group.")
     
     seen_users = MessageReadTracking.objects.filter(message=message)
-    return render(request, 'chatapp\\message_seen_detail.html', {
+    return render(request, 'chatapp/message_seen_detail.html', {
         'message': message,
         'seen_users': seen_users,
     })
@@ -170,7 +170,7 @@ def user_profile_view(request, user_id):
     member_groups = GroupMember.objects.filter(member=user).values_list('group', flat=True)
     member_groups = ChatGroup.objects.filter(id__in=member_groups)
 
-    return render(request, 'chatapp\\user_profile.html', {
+    return render(request, 'chatapp/user_profile.html', {
         'profile_user': user,
         'last_activity': user_activity.last_activity.isoformat(),
         'last_seen_human': time_ago(user_activity.last_activity),
@@ -180,4 +180,4 @@ def user_profile_view(request, user_id):
 
 @login_required
 def about_view(request):
-    return render(request, 'chatapp\\about.html')
+    return render(request, 'chatapp/about.html')
