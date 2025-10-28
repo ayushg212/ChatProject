@@ -63,7 +63,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const groupNo = "{{ group.id }}";
             const groupSocket = new WebSocket(
-                'ws://' + window.location.host + '/ws/group/' + groupNo + '/about/'
+                'wss://' + window.location.host + '/ws/group/' + groupNo + '/about/'
             );
 
             groupSocket.onmessage = function(e) {

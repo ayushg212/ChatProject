@@ -33,7 +33,7 @@
     document.addEventListener('DOMContentLoaded', function() {  
         const userId = "{{ profile_user.id }}";
         const socket = new WebSocket(
-            'ws://' + window.location.host + '/ws/profile/' + userId + '/'
+            'wss://' + window.location.host + '/ws/profile/' + userId + '/'
         );
 
         socket.onmessage = function(e) {

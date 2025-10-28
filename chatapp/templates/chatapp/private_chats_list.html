@@ -30,7 +30,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chatSocket = new WebSocket(
-                'ws://' + window.location.host + '/ws/private_chats/'
+                'wss://' + window.location.host + '/ws/private_chats/'
             );
 
             chatSocket.onopen = function() {

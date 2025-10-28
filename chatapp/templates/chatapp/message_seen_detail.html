@@ -33,7 +33,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const messageId = {{ message.id }};
         const socket = new WebSocket(
-            'ws://' + window.location.host + '/ws/message/' + messageId + '/'
+            'wss://' + window.location.host + '/ws/message/' + messageId + '/'
         );
 
         socket.onopen = function(e) {

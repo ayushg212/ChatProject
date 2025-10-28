@@ -39,13 +39,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const userSocket = new WebSocket(
-                'ws://' + window.location.host + '/ws/home/users/'
+                'wss://' + window.location.host + '/ws/home/users/'
             );
             const groupSocket = new WebSocket(
-                'ws://' + window.location.host + '/ws/home/groups/'
+                'wss://' + window.location.host + '/ws/home/groups/'
             );
             const onlineUserSocket = new WebSocket(
-                'ws://' + window.location.host + '/ws/home/online_users/'
+                'wss://' + window.location.host + '/ws/home/online_users/'
             );
 
             onlineUserSocket.onopen = function(){

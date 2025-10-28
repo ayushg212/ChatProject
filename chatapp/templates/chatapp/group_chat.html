@@ -45,14 +45,14 @@
             const group_no = "{{ group.id }}";
             const isAdmin = "{{ is_admin }}"; 
             const chatSocket = new WebSocket(
-                'ws://' + 
+                'wss://' + 
                 window.location.host + 
                 '/ws/group/' + 
                 group_no + 
                 '/chat/'
             );
             const onlineUsersSocket = new WebSocket(
-                'ws://' + 
+                'wss://' + 
                 window.location.host + 
                 '/ws/group/' + 
                 group_no + 

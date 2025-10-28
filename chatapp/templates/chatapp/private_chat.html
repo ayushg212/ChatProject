@@ -24,7 +24,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const chatUser = "{{ chat_user.username }}"
             const chatSocket = new WebSocket(
-                'ws://' + 
+                'wss://' + 
                 window.location.host +
                 '/ws/private_chat/' + 
                 chatUser + '/'

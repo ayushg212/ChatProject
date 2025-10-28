@@ -27,7 +27,7 @@
 {% block script %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const socket = new WebSocket(`ws://${window.location.host}/ws/pending_requests/`);
+    const socket = new WebSocket(`wss://${window.location.host}/ws/pending_requests/`);
 
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);

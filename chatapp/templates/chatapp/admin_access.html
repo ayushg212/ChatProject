@@ -87,7 +87,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const groupId = "{{ group.id }}";
             const adminSocket = new WebSocket(
-                'ws://' + window.location.host + '/ws/group/' + groupId + '/admin/'
+                'wss://' + window.location.host + '/ws/group/' + groupId + '/admin/'
             );
 
             function disableAllButtons() {
